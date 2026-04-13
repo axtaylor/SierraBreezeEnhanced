@@ -857,6 +857,20 @@ namespace Breeze
         {
             *m_windowPath = *m_titleBarPath;
         }
+
+        qreal bottomLeftRadius = 0;
+        qreal bottomRightRadius = 0;
+        if (!hideTitleBar() && hasNoBorders() && m_internalSettings->roundedCorners())
+        {
+            if (!isBottomEdge())
+            {
+                if (!isLeftEdge())
+                    bottomLeftRadius = 0.5 * s->smallSpacing() * m_internalSettings->cornerRadius();
+                if (!isRightEdge())
+                    bottomRightRadius = 0.5 * s->smallSpacing() * m_internalSettings->cornerRadius();
+            }
+        }
+        setBorderRadius(KDecoration3::BorderRadius(0, 0, bottomRightRadius, bottomLeftRadius));
     }
 
     //________________________________________________________________
