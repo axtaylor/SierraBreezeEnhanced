@@ -860,7 +860,7 @@ namespace Breeze
 
         qreal bottomLeftRadius = 0;
         qreal bottomRightRadius = 0;
-        if (!hideTitleBar() && hasNoBorders() && m_internalSettings->roundedCorners())
+        if (!hideTitleBar() && hasNoBorders() && m_internalSettings->roundedBottomCorners())
         {
             if (!isBottomEdge())
             {

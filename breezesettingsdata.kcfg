@@ -170,7 +170,7 @@
     </entry>
 
     <!-- round bottom corners -->
-    <entry name="RoundedCorners" type = "Bool">
+    <entry name="RoundedBottomCorners" type = "Bool">
       <default>true</default>
     </entry>
 
