@@ -158,6 +158,31 @@ namespace
             return s_shadowParams[3];
         }
     }
+
+    QPainterPath roundedTopCornersPath(const QRectF &rect, qreal radius)
+    {
+        QPainterPath path;
+
+        if (rect.isEmpty())
+            return path;
+
+        radius = qBound<qreal>(0, radius, qMin(rect.width(), rect.height()) / 2);
+        if (radius <= 0)
+        {
+            path.addRect(rect);
+            return path;
+        }
+
+        path.moveTo(rect.left(), rect.bottom());
+        path.lineTo(rect.left(), rect.top() + radius);
+        path.quadTo(rect.left(), rect.top(), rect.left() + radius, rect.top());
+        path.lineTo(rect.right() - radius, rect.top());
+        path.quadTo(rect.right(), rect.top(), rect.right(), rect.top() + radius);
+        path.lineTo(rect.right(), rect.bottom());
+        path.closeSubpath();
+
+        return path;
+    }
 }
 
 namespace Breeze
@@ -791,7 +816,8 @@ namespace Breeze
         const qreal bottomRightRadius = (hasRoundedBottomCorners && !isRightEdge())
             ? 0.5 * s->smallSpacing() * m_internalSettings->cornerRadius() : 0;
 
-        // Title bar handles top radius
+        // Title bar painting handles the top radius. Advertising top decoration
+        // radii here makes KWin separate the client from the title bar.
         setBorderRadius(KDecoration3::BorderRadius(0, 0, bottomRightRadius, bottomLeftRadius));
     }
 
@@ -832,9 +858,14 @@ namespace Breeze
             // set titleBar geometry and path
             m_titleRect = QRect(QPoint(0, 0), QSize(size().width(), borderTop()));
             m_titleBarPath->clear(); // clear the path for subsequent calls to this function
-            if (isMaximized() || !s->isAlphaChannelSupported())
+            if (!s->isAlphaChannelSupported())
             {
                 m_titleBarPath->addRect(m_titleRect);
+            }
+            else if (isMaximized() || isMaximizedHorizontally() || isMaximizedVertically()
+                || isLeftEdge() || isRightEdge())
+            {
+                *m_titleBarPath = roundedTopCornersPath(m_titleRect, 0.5 * s->smallSpacing() * m_internalSettings->cornerRadius());
             }
             else if (c->isShaded())
             {
@@ -861,7 +892,9 @@ namespace Breeze
         m_windowPath->clear(); // clear the path for subsequent calls to this function
         if (!c->isShaded())
         {
-            if (s->isAlphaChannelSupported() && !isMaximized())
+            if (s->isAlphaChannelSupported() && isMaximized())
+                *m_windowPath = roundedTopCornersPath(rect(), 0.5 * s->smallSpacing() * m_internalSettings->cornerRadius());
+            else if (s->isAlphaChannelSupported())
                 m_windowPath->addRoundedRect(rect(), 0.5 * s->smallSpacing() * m_internalSettings->cornerRadius(), 0.5 * s->smallSpacing() * m_internalSettings->cornerRadius());
             else
                 m_windowPath->addRect(rect());
@@ -1033,6 +1066,11 @@ namespace Breeze
         auto s = settings();
         if (!s->isAlphaChannelSupported())
             painter->drawRect(titleRect);
+        else if (isMaximized() || isMaximizedHorizontally() || isMaximizedVertically()
+            || isLeftEdge() || isRightEdge())
+        {
+            painter->drawPath(roundedTopCornersPath(titleRect, m_internalSettings->cornerRadius()));
+        }
         else if (!hasBorders())
         {
             painter->setClipRect(titleRect, Qt::IntersectClip);
